@@ -1,39 +1,40 @@
-//ttbj01022761248001
-//https://noonabookstore.netlify.app
 async function searchBooks() {
-    const ttbKey = 'ttbj01022761248001';
     const query = document.getElementById('query').value;
-   // const url = `https://noonabookstore.netlify.app/proxy?ttbkey=${ttbKey}&Query=${encodeURIComponent(query)}&QueryType=Title&MaxResults=10&start=1&SearchTarget=Book&output=xml&Version=20131101`;
-    const url =`http://www.aladin.co.kr/ttb/api/ItemSearch.aspx?ttbkey=${ttbKey}&Query=aladdin&QueryType=Title&MaxResults=10&start=1&SearchTarget=Book&output=xml&Version=20131101`
+    const apiKey = 'ttbj01022761248001';
+    const url = `http://www.aladin.co.kr/ttb/api/ItemSearch.aspx?ttbkey=${apiKey}&Query=${encodeURIComponent(query)}&QueryType=Title&MaxResults=10&start=1&SearchTarget=Book&output=JS&Version=20131101`;
+
     try {
         const response = await fetch(url);
-        if (!response.ok) throw new Error('Network response was not ok');
-
-        const text = await response.text();
-        const parser = new DOMParser();
-        const xml = parser.parseFromString(text, 'application/xml');
-        displayResults(xml);
+        const data = await response.json();
+        displayResults(data.item);
     } catch (error) {
-        console.error('Fetch error:', error);
+        console.error('Error fetching data:', error);
     }
 }
 
-function displayResults(xml) {
+function displayResults(books) {
     const resultsDiv = document.getElementById('results');
-    resultsDiv.innerHTML = ''; 
+    resultsDiv.innerHTML = ''; // Clear previous results
 
-    const items = xml.getElementsByTagName('item');
-    for (let item of items) {
-        const title = item.getElementsByTagName('title')[0].textContent;
-        const author = item.getElementsByTagName('author')[0].textContent;
-        const cover = item.getElementsByTagName('cover')[0].textContent;
+    if (books && books.length > 0) {
+        books.forEach(book => {
+            const bookDiv = document.createElement('div');
+            bookDiv.classList.add('book');
 
-        const bookDiv = document.createElement('div');
-        bookDiv.innerHTML = `
-            <img src="${cover}" alt="Cover image">
-            <h2>${title}</h2>
-            <p>${author}</p>
-        `;
-        resultsDiv.appendChild(bookDiv);
+            const bookImg = document.createElement('img');
+            bookImg.src = book.cover;
+            bookImg.alt = book.title;
+
+            const bookInfo = document.createElement('div');
+            const bookTitle = document.createElement('h3');
+            bookTitle.textContent = book.title;
+
+            bookInfo.appendChild(bookTitle);
+            bookDiv.appendChild(bookImg);
+            bookDiv.appendChild(bookInfo);
+            resultsDiv.appendChild(bookDiv);
+        });
+    } else {
+        resultsDiv.textContent = '검색 결과가 없습니다.';
     }
 }
